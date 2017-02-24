@@ -1,0 +1,11 @@
+C:\Users\ChrisB\AppData\Local\Temporary Projects\HashCode2017Servers\bin\Debug\HashCode2017Servers.exe.config
+C:\Users\ChrisB\Documents\Visual Studio 2015\Projects\HashCode2017Servers\HashCode2017Servers\bin\Debug\HashCode2017Servers.exe.config
+C:\Users\ChrisB\Documents\Visual Studio 2015\Projects\HashCode2017Servers\HashCode2017Servers\bin\Debug\kittens.in
+C:\Users\ChrisB\Documents\Visual Studio 2015\Projects\HashCode2017Servers\HashCode2017Servers\bin\Debug\me_at_the_zoo.in
+C:\Users\ChrisB\Documents\Visual Studio 2015\Projects\HashCode2017Servers\HashCode2017Servers\bin\Debug\trending_today.in
+C:\Users\ChrisB\Documents\Visual Studio 2015\Projects\HashCode2017Servers\HashCode2017Servers\bin\Debug\videos_worth_spreading.in
+C:\Users\ChrisB\Documents\Visual Studio 2015\Projects\HashCode2017Servers\HashCode2017Servers\bin\Debug\HashCode2017Servers.exe
+C:\Users\ChrisB\Documents\Visual Studio 2015\Projects\HashCode2017Servers\HashCode2017Servers\bin\Debug\HashCode2017Servers.pdb
+C:\Users\ChrisB\Documents\Visual Studio 2015\Projects\HashCode2017Servers\HashCode2017Servers\obj\Debug\HashCode2017Servers.csprojResolveAssemblyReference.cache
+C:\Users\ChrisB\Documents\Visual Studio 2015\Projects\HashCode2017Servers\HashCode2017Servers\obj\Debug\HashCode2017Servers.exe
+C:\Users\ChrisB\Documents\Visual Studio 2015\Projects\HashCode2017Servers\HashCode2017Servers\obj\Debug\HashCode2017Servers.pdb
