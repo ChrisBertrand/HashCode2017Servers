@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static HashCode2017Servers.Reader;
 
 namespace HashCode2017Servers
 {
@@ -14,21 +15,69 @@ namespace HashCode2017Servers
         {
             var solver = new Solver();
             solver.Solve();
-
         }
     }
 
     class Solver
     {
+        public struct VidCosting
+        {
+            public int id;
+            public int vidId;
+            public int size;
+            public int cacheId;
+            public int latency;
+            public int latencySave;
+        }
+
+        public struct CacheFormation
+        {
+            public Cache c;
+            public List<int> videos;
+        }
+
         public void Solve()
         {
             var reader = new Reader();
             reader.Read();
 
             // Solve the problem.
-            var Endpoints = reader.Endpoints.Count();
+            List<VidCosting> VidCost = new List<VidCosting>();
+
+                // Need to merge the requests
+                //var CombinedRequests = reader.Requests.GroupBy(f => f.vId).Select(req => req).ToList();
+                var CombinedRequests = reader.Requests;
+
+            CacheFormation result = new CacheFormation();
+            result.videos = new List<int>();
 
             // Get the lowest latency, find cost for each request
+            foreach (var req in CombinedRequests)
+            {
+                int lD = reader.Endpoints.Where(en => req.sourceEndPoint == en.id).Select(an => an.latencyDataCenter).First();
+                foreach (EndpointCacheLatency c in reader.Endpoints.Where(en => en.id == req.sourceEndPoint).Select(enr => enr.cacheLatency).First())
+                {
+                    int latencySave = lD - c.latency;
+                    // try adding if not too big.
+                    VidCost.Add(new VidCosting {id= req.id, cacheId = c.cacheid, latency = c.latency, latencySave = latencySave, vidId=req.vId,
+                        size = reader.Videos.Where(v => v.id == req.vId).First().size });
+                }
+
+                // Which cache are we on?
+                var cach = reader.Caches.Where(ca => ca.id == VidCost.First().cacheId).First();
+
+                // sort my best latency save
+                var vidsToFit = VidCost.Where(z=> z.cacheId == cach.id).OrderByDescending(a => a.latencySave).TakeWhile(b => b.size < cach.capacity);
+                
+                // Remove capacity.
+                cach.capacity = -VidCost.First().size;
+            }
+            var where = 1;
+        }
+
+        public double Cost()
+        {
+            return int.MaxValue;
         }
     }
 
@@ -73,17 +122,11 @@ namespace HashCode2017Servers
             public int sourceEndPoint;
         }
 
-        public struct CacheFormation
-        {
-            public int id;
-            public List<int> videos;
-        }
-
-        int noOfVideos;
-        int noOfEp;
-        int noOfRequests;
-        int noOfCaches;
-        int cacheSize;
+        public int noOfVideos;
+        public int noOfEp;
+        public int noOfRequests;
+        public int noOfCaches;
+        public int cacheSize;
 
         public void Read()
 
@@ -103,7 +146,14 @@ namespace HashCode2017Servers
             var CurrentFilePos = FileDetails.Skip(1);
             string[] videos = CurrentFilePos.First().Split(' ');
             Videos = new List<Video>();
-            
+
+            // create cache sizes
+            Caches = new List<Cache>();
+            for (int i=0; i<noOfCaches;i++)
+            {
+                Caches.Add(new Cache { id = i, capacity = cacheSize });
+            }
+
             // Create videos with sizes
             for (int i=0; i< videos.Length; i++)
             {
@@ -132,6 +182,9 @@ namespace HashCode2017Servers
                 }
                 Endpoints.Add(end);
             }
+
+            
+
 
             // loop over requests.
             Requests = new List<Request>();
