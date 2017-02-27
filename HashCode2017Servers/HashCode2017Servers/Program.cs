@@ -59,22 +59,60 @@ namespace HashCode2017Servers
             CacheResults results = new CacheResults();
 
             // Get the lowest latency, find cost for each request
+            //Parallel.ForEach(CombinedRequests, (req) =>
+            //    {
+            //        //Latency to DataCentre from Endpoint
+            //        int lD = reader.endpoints.EndpointList.Where(en => req.sourceEndPoint == en.id).Select(an => an.latencyDataCenter).First();
+
+            //        //Get all caches connected to endpoint
+            //        foreach (ConnectedCaches c in reader.endpoints.EndpointList.Where(en => en.id == req.sourceEndPoint).Select(enr => enr.cacheLatency).First())
+            //        {
+            //            int latencySave = lD - c.latency;
+
+            //            // try adding if not too big.
+            //            RequestCostings.Add(new RequestCosting
+            //            {
+            //                id = req.id,
+            //                cacheId = c.cacheid,
+            //                latency = c.latency,
+            //                latencySave = latencySave,
+            //                noOfReqs = req.requests,
+            //                video = reader.vids.getVideoById(req.vId)
+            //            }
+            //             );
+            //        }
+            //    });
+
             foreach (var req in CombinedRequests)
             {
                 //Latency to DataCentre from Endpoint
                 int lD = reader.endpoints.EndpointList.Where(en => req.sourceEndPoint == en.id).Select(an => an.latencyDataCenter).First();
 
                 //Get all caches connected to endpoint
-                foreach (ConnectedCaches c in reader.endpoints.EndpointList.Where(en => en.id == req.sourceEndPoint).Select(enr => enr.cacheLatency).First())
-                {
-                    int latencySave = lD - c.latency;
+                var Endpoints = reader.endpoints.EndpointList.Where(en => en.id == req.sourceEndPoint).ToArray();
 
-                    // try adding if not too big.
-                    RequestCostings.Add(new RequestCosting { id = req.id, cacheId = c.cacheid, latency = c.latency, latencySave = latencySave, noOfReqs = req.requests,
-                        video = reader.vids.getVideoById(req.vId) }
-                     );
+                for (int e = 0; e < Endpoints.Count(); e++)
+                {
+                    var endpointCacheLatency = Endpoints[e].cacheLatency.ToArray();
+
+                    for (int ecl = 0; ecl < endpointCacheLatency.Count(); ecl++)
+                    {
+                        int latencySave = lD - endpointCacheLatency[ecl].latency;
+
+                        // try adding if not too big.
+                        RequestCostings.Add(new RequestCosting
+                        {
+                            id = req.id,
+                            cacheId = endpointCacheLatency[ecl].cacheid,
+                            latency = endpointCacheLatency[ecl].latency,
+                            latencySave = latencySave,
+                            noOfReqs = req.requests,
+                            video = reader.vids.getVideoById(req.vId)
+                        });
+                }
                 }
             }
+            
 
             // sort my best latency save
             foreach (Cache c in reader.caches.CacheList)
@@ -117,7 +155,7 @@ namespace HashCode2017Servers
 
             foreach (CacheFormation cacheResults in results.res)
             {
-                output.WriteLine(string.Join(" ", cacheResults.videos.ToArray()));
+                output.WriteLine(cacheResults.ca.id + " " + string.Join(" ", cacheResults.videos.ToArray()));
             }
             output.Close();
         }
