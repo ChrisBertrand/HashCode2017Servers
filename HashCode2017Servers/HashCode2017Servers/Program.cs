@@ -81,7 +81,7 @@ namespace HashCode2017Servers
             {
                 Console.WriteLine("Starting Cache: " + c.id);
                 // Get the best videos for this request. Latency * NoOfRequests / VideoSize
-                var bestVidsForCache = RequestCostings.Where(z => z.cacheId == c.id).OrderByDescending(a => (a.latencySave * a.noOfReqs) / a.video.size);
+                var bestVidsForCache = RequestCostings.Where(z => z.cacheId == c.id).OrderByDescending(a => (a.latencySave * a.noOfReqs) / a.video.size).ToArray();
 
                 //Create new cacheFormation for this cache
                 if (results.res == null) { results.res = new List<CacheFormation>(); }
@@ -90,7 +90,7 @@ namespace HashCode2017Servers
 
                 for (int i=0; i<bestVidsForCache.Count(); i++)
                 {
-                    var rq = bestVidsForCache.Skip(i).First();
+                    var rq = bestVidsForCache[i]; ;
                     // Check we're not over capacity, and the next video wont push us over either.
                     if (c.capacity > 0 && (c.capacity - rq.video.size > 0))
                     {
@@ -104,7 +104,6 @@ namespace HashCode2017Servers
                 }
                 results.res.Add(result);
             }
-
             Write(results, reader);
 
             var where = 1;
@@ -269,63 +268,71 @@ namespace HashCode2017Servers
         stopWatch.Start();
 
         input = "trending_today.in";
-        var FileDetails = File.ReadAllLines(input);
 
-        string[] firstline = FileDetails.First().Split(' ');
-
-        noOfVideos = Convert.ToInt32(firstline[0]);
-        noOfEp = Convert.ToInt32(firstline[1]);
-        noOfRequests = Convert.ToInt32(firstline[2]);
-        noOfCaches = Convert.ToInt32(firstline[3]);
-        cacheSize = Convert.ToInt32(firstline[4]);
-        var CurrentFilePos = FileDetails.Skip(1);
-        string[] videoArray = CurrentFilePos.First().Split(' ');
-
-        // create cache sizes
-        for (int i=0; i<noOfCaches;i++)
-        {
-            caches.CacheList.Add(new Cache(i,cacheSize));
-        }
-
-        // Create videos with sizes
-        for (int i=0; i< videoArray.Length; i++)
-        {
-            Video video = new Video(i, Convert.ToInt32(videoArray[i]));
-            vids.VideoList.Add(video);
-        }
-
-        // loop over endpoints and number of connected caches
-        for (int i = 0; i < noOfEp; i++)
-        {
-            CurrentFilePos = CurrentFilePos.Skip(1);
-            string[] endpoint = CurrentFilePos.First().Split(' ');
-            Endpoint end = new Endpoint(i, Convert.ToInt32(endpoint[0]));
-
-            var noOfCachesConnected = Convert.ToInt32(endpoint[1]);
-
-            for (int j=0; j < noOfCachesConnected ; j++)
+            using (StreamReader streamReader = new StreamReader(input))
             {
-                CurrentFilePos = CurrentFilePos.Skip(1);
-                string[] endpointLatencyCache = CurrentFilePos.First().Split(' ');
+               while (!streamReader.EndOfStream)
+                {
+                    var line = streamReader.ReadLine();
+                    string[] firstline  = line.Split(' ');
 
-                    int cacheid = Convert.ToInt32(endpointLatencyCache[0]);
-                    int EndLat = Convert.ToInt32(endpointLatencyCache[1]);
-                    var cacheLatencyToEndpoint = new ConnectedCaches { cacheid = cacheid, latency = EndLat};
-                    end.cacheLatency.Add(cacheLatencyToEndpoint);
-            }
-                endpoints.EndpointList.Add(end);
-            }
+                    noOfVideos = Convert.ToInt32(firstline[0]);
+                    noOfEp = Convert.ToInt32(firstline[1]);
+                    noOfRequests = Convert.ToInt32(firstline[2]);
+                    noOfCaches = Convert.ToInt32(firstline[3]);
+                    cacheSize = Convert.ToInt32(firstline[4]);
 
-            // loop over requests.
-            for (int req = 0; req< noOfRequests; req++)
-            {
-                CurrentFilePos = CurrentFilePos.Skip(1);
-                string[] reqs = CurrentFilePos.First().Split(' ');
-                Request r = new Request { id = req, vId = Convert.ToInt32(reqs[0]), sourceEndPoint = Convert.ToInt32(reqs[1]), requests = Convert.ToInt32(reqs[2]) };
-                requests.RequestList.Add(r);
-            } 
-            var ret = true;
-            Console.WriteLine("File Read: " + stopWatch.Elapsed.ToString());
+                    line = streamReader.ReadLine();
+
+                    string[] videoArray = line.Split(' ');
+
+                    // create cache sizes
+                    for (int i = 0; i < noOfCaches; i++)
+                    {
+                        caches.CacheList.Add(new Cache(i, cacheSize));
+                    }
+
+                    // Create videos with sizes
+                    for (int i = 0; i < videoArray.Length; i++)
+                    {
+                        Video video = new Video(i, Convert.ToInt32(videoArray[i]));
+                        vids.VideoList.Add(video);
+                    }
+
+                    // loop over endpoints and number of connected caches
+                    for (int i = 0; i < noOfEp; i++)
+                    {
+                        line = streamReader.ReadLine();
+                        string[] endpoint = line.Split(' ');
+                        Endpoint end = new Endpoint(i, Convert.ToInt32(endpoint[0]));
+
+                        var noOfCachesConnected = Convert.ToInt32(endpoint[1]);
+
+                        for (int j = 0; j < noOfCachesConnected; j++)
+                        {
+                            line = streamReader.ReadLine();
+                            string[] endpointLatencyCache = line.Split(' ');
+
+                            int cacheid = Convert.ToInt32(endpointLatencyCache[0]);
+                            int EndLat = Convert.ToInt32(endpointLatencyCache[1]);
+                            var cacheLatencyToEndpoint = new ConnectedCaches { cacheid = cacheid, latency = EndLat };
+                            end.cacheLatency.Add(cacheLatencyToEndpoint);
+                        }
+                        endpoints.EndpointList.Add(end);
+                    }
+
+                    // loop over requests.
+                    for (int req = 0; req < noOfRequests; req++)
+                    {
+                        line = streamReader.ReadLine();
+                        string[] reqs = line.Split(' ');
+                        Request r = new Request { id = req, vId = Convert.ToInt32(reqs[0]), sourceEndPoint = Convert.ToInt32(reqs[1]), requests = Convert.ToInt32(reqs[2]) };
+                        requests.RequestList.Add(r);
+                    }
+                    var ret = true;
+                    Console.WriteLine("File Read: " + stopWatch.Elapsed.ToString());
+                }
+            }
         }
     }
 }
