@@ -35,6 +35,7 @@ namespace HashCode2017Servers
         {
             public Cache ca;
             public List<int> videos;
+            public int score;
         }
 
         public struct CacheResults
@@ -59,29 +60,6 @@ namespace HashCode2017Servers
             CacheResults results = new CacheResults();
 
             // Get the lowest latency, find cost for each request
-            //Parallel.ForEach(CombinedRequests, (req) =>
-            //    {
-            //        //Latency to DataCentre from Endpoint
-            //        int lD = reader.endpoints.EndpointList.Where(en => req.sourceEndPoint == en.id).Select(an => an.latencyDataCenter).First();
-
-            //        //Get all caches connected to endpoint
-            //        foreach (ConnectedCaches c in reader.endpoints.EndpointList.Where(en => en.id == req.sourceEndPoint).Select(enr => enr.cacheLatency).First())
-            //        {
-            //            int latencySave = lD - c.latency;
-
-            //            // try adding if not too big.
-            //            RequestCostings.Add(new RequestCosting
-            //            {
-            //                id = req.id,
-            //                cacheId = c.cacheid,
-            //                latency = c.latency,
-            //                latencySave = latencySave,
-            //                noOfReqs = req.requests,
-            //                video = reader.vids.getVideoById(req.vId)
-            //            }
-            //             );
-            //        }
-            //    });
 
             foreach (var req in CombinedRequests)
             {
@@ -136,6 +114,8 @@ namespace HashCode2017Servers
                         if (result.videos.IndexOf(rq.video.id) == -1)
                         {
                             result.videos.Add(rq.video.id);
+                            int totalReq = bestVidsForCache.Sum(a => a.noOfReqs);
+                            result.score = result.score + ((rq.latencySave * rq.noOfReqs) / totalReq);
                             c.capacity = c.capacity - rq.video.size;
                         }
                     }
@@ -143,8 +123,6 @@ namespace HashCode2017Servers
                 results.res.Add(result);
             }
             Write(results, reader);
-
-            var where = 1;
         }
 
         private void Write(CacheResults results, Reader reader)
@@ -153,10 +131,15 @@ namespace HashCode2017Servers
             //First Line
             output.WriteLine(results.res.Count());
 
+            int score = 0;
             foreach (CacheFormation cacheResults in results.res)
             {
+                score = score + cacheResults.score;
+                Console.WriteLine("Score: " + cacheResults.score.ToString());
                 output.WriteLine(cacheResults.ca.id + " " + string.Join(" ", cacheResults.videos.ToArray()));
             }
+            Console.WriteLine("Final Score: "  + score);
+            // score is 390455
             output.Close();
         }
     }
@@ -305,7 +288,7 @@ namespace HashCode2017Servers
         Stopwatch stopWatch = new Stopwatch();
         stopWatch.Start();
 
-        input = "trending_today.in";
+        input = "me_at_the_zoo.in";
 
             using (StreamReader streamReader = new StreamReader(input))
             {
